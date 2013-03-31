@@ -14,7 +14,7 @@
 # ./update-wp-plugins.pl registered-name-of-plugin
 # (and this works to update an exiting plugin or download+install a new one)
 
-$debugmode=1;
+$debugmode=0;
 
 if(!defined($ARGV[0])) {
     dprint ("No arguments supplied for folder path");
@@ -22,14 +22,14 @@ if(!defined($ARGV[0])) {
 }
 else {
     $path=$ARGV[0];
-    print "Path was specified on the command line\n";
+    dprint ("Path was specified on the command line\n");
     if ( -d $path )
     {
-	print "Path verified\n";
+	dprint ("Path verified\n");
     }
     else
     {
-	print "The path does not exist\n";
+	dprint ("The path does not exist\n");
 	exit;
     }
 }
@@ -71,15 +71,15 @@ foreach my $i (@folders){
 
 for (my $i = 0; $i < @plugins ; $i++ ) 
 {
-    print "Processing ".$plugins[$i]."...";
+    dprint ("Processing ".$plugins[$i]."...");
     #print "Filename:".$filepath[$i]."/".$plugins[$i].".php"."\n";
     $filename=$filepath[$i]."/".$plugins[$i].".php";
 	$varfound=0;
     if ( -f $filename ) 
     {
-		print "Meta File found at default location.\n";
+		dprint ("Meta File found at default location.\n");
 		$ver=&read_extract($filename);
-		print "Version:".$ver."\n";
+		dprint ("Version:".$ver."\n");
 		$pluginversion[$i]=$ver;
 		$varfound=1;
     }
@@ -88,24 +88,26 @@ for (my $i = 0; $i < @plugins ; $i++ )
 		#print "File does NOT exist\n";
 		$searchpath=$path."/".$plugins[$i];
 		@files = <$searchpath/*.php>;
-		print "Search path is ".$searchpath."\n";
-		foreach $file (@files) 
+		dprint ("Search path is ".$searchpath."\n");
+OUT: 	foreach $file (@files) 
 		{
-			print "Checking alternate php file: ".$file."\n";
+			dprint ("Checking alternate php file: ".$file."\n");
 			open(txt, $file);
 			while($line = <txt>) 
 			{
-				if ( $line =~ /^Version:|^version:/ )
+				#  $line =~ /^[\s\*]*Version:(.*)/i
+				# Discussion on regex: http://stackoverflow.com/questions/15728671/perl-regex-logic-error
+				if ( $line =~ /^\s*\**\s*\bVersion:(.*)/i )
 				{
-					print "Version found in file ".$file."\n";	
-					$varfound=1;	
-					close(txt);
-					$ver=&read_extract($file);
-					print $ver."\n";
-					$pluginversion[$i]=$ver;
-					print "Array Num ".$i." Stored plugin name:".$plugins[$i]." Version found ".$ver." Version stored ".$pluginversion[$i]."\n";
+					$pluginversion[$i]=$1;
+					dprint ("Version found in file ".$file);						
+					$varfound=1;										
+					dprint ($pluginversion[$i]."\n");
+					dprint ("Array Num ".$i." Stored plugin name:".$plugins[$i]." Version found and stored ".$pluginversion[$i]);
+					last OUT;
 				}
 			}
+			close(txt);	
 		}
     }
 	push @plugins_notfound, $plugins[$i];
@@ -121,7 +123,7 @@ if ( ! $varfound)
 }
 else 
 {
-	print "We found all version numbers\n";
+	dprint ("We found all version numbers");
 }
 
 print "Summary of scanning plugin directory\n";
@@ -140,14 +142,17 @@ if(defined($ARGV[1])) {
     &update_plugin($name);
 }
 else {
+	$i=-1;
     for my $name (@plugins) {
-        &update_plugin($name);
+		$i++;
+        &update_plugin($name,$i);
     }
 }
 
 
 sub update_plugin {
-    my $name = shift;
+    my $name = $_[0];
+	my $index = $_[1];
     my $url = "$wp_base_url/$name";
     $mech->get( $url );
     my $page = $mech->content;
@@ -163,21 +168,27 @@ sub update_plugin {
 	    $file = $1;
 	}
     }
-    print "\nPlugin: $name | Version $version\n";
+    print "\nPlugin: $name | Remote version $version | Local version $pluginversion[$index]\n";
     print "\nDescription: $description\n\n";
+	
     `/bin/rm -f $file`; print "Downloading: \t$url\n";
     `/usr/bin/wget -q $url`; print "Unzipping: \t$file\n";
     `/usr/bin/unzip -o $file`; print "Installed: \t$name\n";
     `/bin/rm -f $file`;
 }
-
+ 
 sub read_extract
 {
 	my $pl_version="";
     open(txt, my $file=$_[0]);
     while($line = <txt>)
     {
-        if ( $line =~ /^Version:|^version: / )
+		for ($line)
+		{
+		 s/^\s+//;
+		 s/\s+$//;
+		}			
+        if ( $line =~ /^Version:|^version:|^\* Version:/ )
         {
             $pl_version=&extract_version($line);
         }
