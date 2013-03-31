@@ -14,8 +14,10 @@
 # ./update-wp-plugins.pl registered-name-of-plugin
 # (and this works to update an exiting plugin or download+install a new one)
 
+$debugmode=1;
+
 if(!defined($ARGV[0])) {
-    	print "No arguments supplied for folder path\n";
+    dprint ("No arguments supplied for folder path");
 	$path="/var/www/virtual/joel.co.in/vettathu.com/htdocs/wp-content/plugins";
 }
 else {
@@ -32,7 +34,7 @@ else {
     }
 }
 
-print "The path was set as ".$path."\n";
+dprint ("The path was set as ".$path."\n");
 
 chdir($path);
 
@@ -47,7 +49,8 @@ my $wp_base_url = "http://wordpress.org/extend/plugins";
 # Format:
 #   'registered-name-of-plugin',
 #
-my @plugins;
+my @plugins, @plugins_notfound, @filepath, @pluginversion;
+
 use File::Find::Rule;
 use File::Spec;
 
@@ -75,7 +78,9 @@ for (my $i = 0; $i < @plugins ; $i++ )
     if ( -f $filename ) 
     {
 		print "Meta File found at default location.\n";
-		print "Version:".&read_extract($filename)."\n";
+		$ver=&read_extract($filename);
+		print "Version:".$ver."\n";
+		$pluginversion[$i]=$ver;
 		$varfound=1;
     }
     else
@@ -90,14 +95,15 @@ for (my $i = 0; $i < @plugins ; $i++ )
 			open(txt, $file);
 			while($line = <txt>) 
 			{
-				if ( $line =~ /Version:|version:/ )
+				if ( $line =~ /^Version:|^version:/ )
 				{
 					print "Version found in file ".$file."\n";	
 					$varfound=1;	
+					close(txt);
 					$ver=&read_extract($file);
 					print $ver."\n";
-					push @pluginversion, $ver;
-					
+					$pluginversion[$i]=$ver;
+					print "Array Num ".$i." Stored plugin name:".$plugins[$i]." Version found ".$ver." Version stored ".$pluginversion[$i]."\n";
 				}
 			}
 		}
@@ -171,7 +177,7 @@ sub read_extract
     open(txt, my $file=$_[0]);
     while($line = <txt>)
     {
-        if ( $line =~ /Version:|version: / )
+        if ( $line =~ /^Version:|^version: / )
         {
             $pl_version=&extract_version($line);
         }
@@ -191,4 +197,16 @@ sub extract_version
     }
     $string;
 }
+
+sub dprint
+{
+	$debugmode;
+	$debugtext=$_[0];
+	if ($debugmode) 
+	{
+		print $debugtext."\n";
+	}
+}	
+	
+
 
