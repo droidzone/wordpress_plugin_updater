@@ -50,7 +50,7 @@ chdir($path);
 
 use WWW::Mechanize;
 #use File::Find;
-my $mech = WWW::Mechanize->new();
+my $mech = WWW::Mechanize->new( autocheck => 0 );
 $mech->agent_alias( 'Mac Safari' );
 my $wp_base_url = "http://wordpress.org/extend/plugins";
 
@@ -182,10 +182,6 @@ if ( $pluginsdone > 1 )
 {
 	print "$pluginsdone plugin(s) were updated.\n";
 }
-elsif ( $pluginsdone > 1 )
-{
-	print "1 plugin was updated.\n";
-}
 else
 {
 	print "Plugins were already up-to-date. Nothing done.\n";
@@ -196,52 +192,64 @@ sub update_plugin {
     my $name = $_[0];
 	my $index = $_[1];
     my $url = "$wp_base_url/$name";
-    $mech->get( $url );
-    my $page = $mech->content;
-	$url="";
-    my ($version,$description,$file) = "";
-    if($page =~ /.*<p class="button"><a itemprop='downloadUrl' href='(.*)'>Download Version (.*)<\/a><\/p>.*/) 
-	{
-		$url = $1;
-		$version = $2;
-		if($page =~ /.*<p itemprop="description" class="shortdesc">\n(\s+)?(.*  
-	)(\s+)(\t+)?<\/p>.*/) 
+    #my $response = $mech->get( $url );
+	$mech->get( $url );
+	if ( $mech->success() )
+	{		
+		#die "Can't get $url -- ", $response->status_line unless $response->is_success;
+		my $page = $mech->content;
+		$url="";
+		my ($version,$description,$file) = "";
+		if($page =~ /.*<p class="button"><a itemprop='downloadUrl' href='(.*)'>Download Version (.*)<\/a><\/p>.*/) 
 		{
-			$description = $2;
-		}
-		if($url =~ /http:\/\/downloads\.wordpress\.org\/plugin\/(.*)/) 
+			$url = $1;
+			$version = $2;
+			if($page =~ /.*<p itemprop="description" class="shortdesc">\n(\s+)?(.*  
+		)(\s+)(\t+)?<\/p>.*/) 
+			{
+				$description = $2;
+			}
+			if($url =~ /http:\/\/downloads\.wordpress\.org\/plugin\/(.*)/) 
+			{
+				$file = $1;
+			}
+		}	
+		$oldversion = $pluginversion[$index];
+		$version =~ s/[^a-zA-Z0-9\.]*//g;	
+		$oldversion =~ s/[^a-zA-Z0-9\.]*//g;
+		
+		print "Processing plugin: ";
+		print colored($name, 'green');	
+		print " | Local version ";
+		print colored($oldversion, 'green');		
+		print " | Remote version ";
+		
+		if ( $version eq $oldversion )
 		{
-			$file = $1;
+			print colored($version, 'green');	
+			print " | ";
+			print colored("Already update\n", 'green');
 		}
-    }	
-	$oldversion = $pluginversion[$index];
-	$version =~ s/[^a-zA-Z0-9\.]*//g;	
-	$oldversion =~ s/[^a-zA-Z0-9\.]*//g;
-	
-    print "Processing plugin: ";
-	print colored($name, 'green');	
-	print " | Local version ";
-	print colored($oldversion, 'green');		
-	print " | Remote version ";
-	
-	if ( $version eq $oldversion )
-	{
-		print colored($version, 'green');	
-		print " | ";
-		print colored("Already update\n", 'green');
+		else
+		{
+			print colored($version, 'red');	
+			print " | ";
+			$pluginsdone++;
+			print colored("Updating now..\n\n", 'blue');
+			#print "Updating plugin $name now";
+			`/bin/rm -f $file`; print "Downloading: \t$url\n";
+			`/usr/bin/wget -q $url`; print "Unzipping: \t$file\n";
+			`/usr/bin/unzip -o $file`; 
+			print colored("Installed: \t$name\n\n", 'green');		
+			`/bin/rm -f $file`;
+		}
 	}
 	else
 	{
-		print colored($version, 'red');	
-		print " | ";
-		$pluginsdone++;
-		print colored("Updating now..\n\n", 'blue');
-		#print "Updating plugin $name now";
-		`/bin/rm -f $file`; print "Downloading: \t$url\n";
-		`/usr/bin/wget -q $url`; print "Unzipping: \t$file\n";
-		`/usr/bin/unzip -o $file`; 
-		print colored("Installed: \t$name\n\n", 'green');		
-		`/bin/rm -f $file`;
+		$error_msg="Error while processing plugin - $name Maybe it's deleted from Wordpress! Error Code is:";
+		print colored($error_msg, 'red');
+		$errorcode=$mech->status()."\n";
+		print colored($errorcode, 'red');
 	}
 }
  
