@@ -14,9 +14,10 @@
 # ./update-wp-plugins.pl registered-name-of-plugin
 # (and this works to update an exiting plugin or download+install a new one)
 use v5.16;
-our $progversion="3.0.0.3";
+my $progversion="3.0.0.3";
 our $debugmode=0;
-our ($path,$volume,$directories,$file,$volume,$varfound,$filename,$searchpath,@files,$line);
+our ($path,$directories,$varfound,$filename,$searchpath,@files,$line);
+our $type_of_install;
 use Term::ANSIColor;
 print color 'bold blue';
 print "Wordpress Plugin Updater script v$progversion.\n";
@@ -70,8 +71,8 @@ my @folders = File::Find::Rule->directory->maxdepth(1)
     ;
 	
 foreach my $i (@folders){
+	my ($volume, $directories, $file);
     ( $volume, $directories, $file ) = File::Spec->splitpath( $i );
-	undef $volume, $directories;
     if ( $file ne "plugins" )
     {
         push @plugins, $file;
@@ -109,7 +110,8 @@ for (my $i = 0; $i < @plugins ; $i++ )
 		$searchpath=$path."/".$plugins[$i];
 		@files = <$searchpath/*.php>;
 		dprint ("Search path is ".$searchpath."\n");
-OUT: 	foreach $file (@files) 
+		
+OUT: 	foreach my $file (@files) 
 		{
 			dprint ("Checking alternate php file: ".$file."\n");
 			open("txt", $file);
@@ -315,7 +317,13 @@ sub argparser
 				&print_help;
 				exit;
 			}
+			default 
+			{
+				$type_of_install="full"
+			}
+			print "Type of install:$type_of_install\n";
 		}
+		
 	}
 
 }
