@@ -16,17 +16,16 @@
 use v5.16;
 my $progversion="3.0.0.3";
 our $debugmode=0;
-our ($directories,$varfound,$filename,$searchpath,@files,$line,@pluginproclist);
-our $fullinstall;
+our ($directories,$varfound,$filename,$searchpath,$fullinstall,$line,@files,@pluginproclist);
+our $path='';
+
 use Term::ANSIColor;
 use Getopt::Long;
-    
+Getopt::Long::Configure(qw(bundling no_getopt_compat));
+&ArgParser;    
 print color 'bold blue';
 print "Wordpress Plugin Updater script v$progversion.\n";
 print color 'reset';
-#&argparser(@$ARGV);
-Getopt::Long::Configure(qw(bundling no_getopt_compat));
-
 
 dprint ("The path was set as ".$path."\n");
 print "Plugin directory:$path\n";
@@ -315,7 +314,7 @@ sub ArgParser
 {
 	my $help='';
 	my $prtversion='';
-	our $path='';
+
 	#GetOptions ('help|h:s' => \$help);
 	GetOptions ('help|h' => \$help,
 				'plugin|p=s' => \@pluginproclist,

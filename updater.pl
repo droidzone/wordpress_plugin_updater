@@ -16,35 +16,16 @@
 use v5.16;
 my $progversion="3.0.0.3";
 our $debugmode=0;
-our ($path,$directories,$varfound,$filename,$searchpath,@files,$line);
-our $type_of_install;
+our ($directories,$varfound,$filename,$searchpath,$fullinstall,$line,@files,@pluginproclist);
+our $path='';
+
 use Term::ANSIColor;
+use Getopt::Long;
+Getopt::Long::Configure(qw(bundling no_getopt_compat));
+&ArgParser;    
 print color 'bold blue';
 print "Wordpress Plugin Updater script v$progversion.\n";
 print color 'reset';
-&argparser(@$ARGV);
-
-
-if(!defined($ARGV[0])) {
-    dprint ("No arguments supplied for folder path");
-	$path="/var/www/virtual/joel.co.in/vettathu.com/htdocs/wp-content/plugins";
-	dprint ("Path was specified on the command line\n");
-}
-else {
-	#my @values = split(',', $ARGV[0]);	
-	#foreach my $val (@values) 
-	$path=$ARGV[0];
-	#print "Working on directory: $path\n";	    
-    if ( -d $path )
-    {
-		dprint ("Path verified\n");
-    }
-    else
-    {
-		dprint ("The path does not exist\n");
-	exit;
-    }
-}
 
 dprint ("The path was set as ".$path."\n");
 print "Plugin directory:$path\n";
@@ -69,16 +50,38 @@ use File::Spec;
 my @folders = File::Find::Rule->directory->maxdepth(1)
     ->in( $path )
     ;
-	
+dprint ("Comparing list of plugins to process:\n");
 foreach my $i (@folders){
 	my ($volume, $directories, $file);
     ( $volume, $directories, $file ) = File::Spec->splitpath( $i );
-    if ( $file ne "plugins" )
-    {
-        push @plugins, $file;
-		push @filepath, $i;
-		#print "Path: ".$i."\t Name: ".$file."\n";
-    }
+	
+	if (@pluginproclist)
+	{
+		
+		for my $pluginp (@pluginproclist)
+		{
+			dprint ("\t$file against $pluginp\n");
+			if ( $pluginp eq $file )
+			{
+				dprint ("Supplied plugin name $pluginp matched from plugin folder\n");					
+				push @plugins, $file;
+				push @filepath, $i;
+			}
+			else
+			{
+				dprint ("\t\t$file was not a match for $pluginp\n");
+			}
+		}
+	}
+	else
+	{	
+		if ( $file ne "plugins" )
+		{
+			push @plugins, $file;
+			push @filepath, $i;
+			#print "Path: ".$i."\t Name: ".$file."\n";
+		}
+	}
 }
 
 
@@ -147,22 +150,24 @@ else
 {
 	dprint ("We found all version numbers");
 }
-print color 'red';
-#print colored("Summary of scanning plugin directory", 'red'), "\n";
-print "Summary of scanning plugin directory\n";
-print "------------------------------------\n";
-printf("%-4s %-45s %3s\n", "No", "Name", "Version");
-print color 'reset';
-#print "No:\tName\tVersion\n";
-for (my $i = 0; $i < @plugins ; $i++ ) 
+if (!@pluginproclist)
 {
-	my $v = $pluginversion[$i];
-	$v =~ s/[^a-zA-Z0-9\.]*//g;	
-	printf("%-4s %-45s %3s\n", $i, $plugins[$i], $v );
-	#print "$i\t$plugins[$i]\t$pluginversion[$i]\n";
+	print color 'red';
+	#print colored("Summary of scanning plugin directory", 'red'), "\n";
+	print "Summary of scanning plugin directory\n";
+	print "------------------------------------\n";
+	printf("%-4s %-45s %3s\n", "No", "Name", "Version");
+	print color 'reset';
+	#print "No:\tName\tVersion\n";
+	for (my $i = 0; $i < @plugins ; $i++ ) 
+	{
+		my $v = $pluginversion[$i];
+		$v =~ s/[^a-zA-Z0-9\.]*//g;	
+		printf("%-4s %-45s %3s\n", $i, $plugins[$i], $v );
+		#print "$i\t$plugins[$i]\t$pluginversion[$i]\n";
+	}
+	print "\n";
 }
-print "\n";
-
 
 ################################################
 my $pluginsdone=0;
@@ -179,7 +184,7 @@ else {
     }
 }
 
-print "Plugin updation completed successfully.\n";
+#print "Plugin updation completed successfully.\n";
 
 if ( $pluginsdone > 1 )
 {
@@ -305,25 +310,49 @@ sub print_help
 	print "\nBoth arguments are optional\n\n";
 }
 
-sub argparser
+sub ArgParser
 {
-	foreach (@ARGV) 
+	my $help='';
+	my $prtversion='';
+
+	#GetOptions ('help|h:s' => \$help);
+	GetOptions ('help|h' => \$help,
+				'plugin|p=s' => \@pluginproclist,
+				'version|v' => \$prtversion,
+				'source=s' => \$path
+				);
+	if ($help)
 	{
-		my $argu=$_;
-		given ($argu) 
+		&print_help;
+		exit;
+	}
+	if ($prtversion)
+	{
+		print "Version:$progversion\n";
+		exit;
+	}	
+	if (@pluginproclist)
+	{
+		print ("Received a list of plugins to process:\n");
+		for my $pluginp (@pluginproclist)
 		{
-			when ("--help") 
-			{
-				&print_help;
-				exit;
-			}
-			default 
-			{
-				$type_of_install="full"
-			}
-			print "Type of install:$type_of_install\n";
+			print ("\t$pluginp\n");
 		}
-		
 	}
 
+	if (!$path)
+	{
+		print "Source path for plugins was not specified. If you need to specify it, use --source=/path/to/plugindir or -s/path/to/plugindir.";
+		print "Hard coded path will now be used.\n";
+		$path="/var/www/virtual/joel.co.in/vettathu.com/htdocs/wp-content/plugins";
+		if ( -d $path )
+		{
+			dprint ("Path verified\n");
+		}
+		else
+		{
+			dprint ("The path does not exist\n");
+			exit;
+		}
+	}
 }
