@@ -394,7 +394,7 @@ Wordpress plugin updater script is a perl script to check specified locations on
 compare plugin versions to those on Wordpress.org central repository and update if updates are found. It can batch process all plugins. Alternately, you can
  specify command line options for the plugin names, and update just required plugins.
 
-Command line options:
+Usage:
 --help or -h: Display this help message
 --source=/path/to/plugindirectory or -s/path/to/plugindirectory
 	Multiple folders can be specified at a time.
@@ -406,11 +406,9 @@ you can either repeat this option, like:
 	  Or,
 you can alternately specify a comma seperated list of plugins, like:
 	Eg: ./updater.pl --plugin=nextgen-gallery,genesis-beta-tester
---wp-path= or -wp: Specify wordpress root directory instead of plugin directory
+--wp-path= or -w: Specify wordpress root directory instead of plugin directory
 	Eg: ./updater.pl --wp-path=/var/www/virtual/joel.co.in/droidzone.in/htdocs,/var/www/virtual/joel.co.in/vettathu.com/htdocs
-	
-Credits:
- Modified and rewritten from the work of Ventz Petkov at http://blog.vpetkov.net/2011/08/03/script-to-upgrade-plugins-on-wordpress-to-the-latest-version-fully-automatically/'."\n";
+'."\n";
 
 }
 
