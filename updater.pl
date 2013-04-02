@@ -13,9 +13,10 @@
 #   or
 # ./update-wp-plugins.pl registered-name-of-plugin
 # (and this works to update an exiting plugin or download+install a new one)
-
-$progversion="3.0.0.2";
-$debugmode=0;
+use v5.16;
+our $progversion="3.0.0.3";
+our $debugmode=0;
+our ($path,$volume,$directories,$file,$volume,$varfound,$filename,$searchpath,@files,$line);
 use Term::ANSIColor;
 print color 'bold blue';
 print "Wordpress Plugin Updater script v$progversion.\n";
@@ -153,7 +154,7 @@ print color 'reset';
 #print "No:\tName\tVersion\n";
 for (my $i = 0; $i < @plugins ; $i++ ) 
 {
-	$v = $pluginversion[$i];
+	my $v = $pluginversion[$i];
 	$v =~ s/[^a-zA-Z0-9\.]*//g;	
 	printf("%-4s %-45s %3s\n", $i, $plugins[$i], $v );
 	#print "$i\t$plugins[$i]\t$pluginversion[$i]\n";
@@ -162,14 +163,14 @@ print "\n";
 
 
 ################################################
-$pluginsdone=0;
+my $pluginsdone=0;
 
 if(defined($ARGV[1])) {
     my $name = $ARGV[1];
     &update_plugin($name);
 }
 else {
-	$i=-1;
+	my $i=-1;
     for my $name (@plugins) {
 		$i++;
         &update_plugin($name,$i);
@@ -214,7 +215,7 @@ sub update_plugin {
 				$file = $1;
 			}
 		}	
-		$oldversion = $pluginversion[$index];
+		my $oldversion = $pluginversion[$index];
 		$version =~ s/[^a-zA-Z0-9\.]*//g;	
 		$oldversion =~ s/[^a-zA-Z0-9\.]*//g;
 		
@@ -246,9 +247,9 @@ sub update_plugin {
 	}
 	else
 	{
-		$error_msg="Error while processing plugin - $name Maybe it's deleted from Wordpress! Error Code is:";
+		my $error_msg="Error while processing plugin - $name Maybe it's deleted from Wordpress! Error Code is:";
 		print colored($error_msg, 'red');
-		$errorcode=$mech->status()."\n";
+		my $errorcode=$mech->status()."\n";
 		print colored($errorcode, 'red');
 	}
 }
@@ -276,18 +277,18 @@ sub read_extract
 sub extract_version
 {
     my $line=$_[0];
-    $string=substr($line,rindex($line, ":")+1);
-    for ($string)
+    my $st=substr($line,rindex($line, ":")+1);
+    for ($st)
     {
      s/^\s+//;
      s/\s+$//;
     }
-    $string;
+    $st;
 }
 
 sub dprint
 {
-	$debugtext=$_[0];
+	my $debugtext=$_[0];
 	if ($debugmode) 
 	{
 		print $debugtext."\n";
@@ -304,13 +305,16 @@ sub print_help
 
 sub argparser
 {
-	foreach (@ARGV) {
-		$argu=$_;
-		#print "Argument:$argu";
-		if ($argu eq "--help")
+	foreach (@ARGV) 
+	{
+		my $argu=$_;
+		given ($argu) 
 		{
-			&print_help;
-			exit;
+			when ("--help") 
+			{
+				&print_help;
+				exit;
+			}
 		}
 	}
 
