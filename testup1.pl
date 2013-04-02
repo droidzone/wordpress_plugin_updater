@@ -32,7 +32,7 @@ else {
 	#my @values = split(',', $ARGV[0]);	
 	#foreach my $val (@values) 
 	$path=$ARGV[0];
-	print "Working on directory: $path\n";	    
+	#print "Working on directory: $path\n";	    
     if ( -d $path )
     {
 		dprint ("Path verified\n");
