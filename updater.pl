@@ -297,7 +297,7 @@ sub ArgParser
 				'debug|d' => \$dmode,
 				'plugin|p=s' => \@pluginproclist,
 				'source|s=s' => \@spath,
-				'wp-path|wp=s' => \@wpath
+				'wp-path|w=s' => \@wpath
 				);
 	if ($help)
 	{
