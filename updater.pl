@@ -16,9 +16,9 @@
 use v5.16;
 my $progversion="3.0.0.3";
 our $debugmode=0;
-our ($directories,$varfound,$filename,$searchpath,$fullinstall,$line,@files,@pluginproclist);
+our ($directories,$varfound,$filename,$searchpath,$fullinstall,$line,@files,@pluginproclist,@spath);
 our $path='';
-
+our $pluginsdone;
 use Term::ANSIColor;
 use Getopt::Long;
 Getopt::Long::Configure(qw(bundling no_getopt_compat));
@@ -27,9 +27,9 @@ print color 'bold blue';
 print "Wordpress Plugin Updater script v$progversion.\n";
 print color 'reset';
 
-dprint ("The path was set as ".$path."\n");
-print "Plugin directory:$path\n";
-chdir($path);
+#dprint ("The path was set as ".$path."\n");
+#print "Plugin directory:$path\n";
+#
 
 use WWW::Mechanize;
 #use File::Find;
@@ -47,164 +47,149 @@ my (@plugins, @plugins_notfound, @filepath, @pluginversion);
 use File::Find::Rule;
 use File::Spec;
 
-my @folders = File::Find::Rule->directory->maxdepth(1)
-    ->in( $path )
-    ;
-dprint ("Comparing list of plugins to process:\n");
-foreach my $i (@folders){
-	my ($volume, $directories, $file);
-    ( $volume, $directories, $file ) = File::Spec->splitpath( $i );
-	
-	if (@pluginproclist)
-	{
-		
-		for my $pluginp (@pluginproclist)
-		{
-			dprint ("\t$file against $pluginp\n");
-			if ( $pluginp eq $file )
-			{
-				dprint ("Supplied plugin name $pluginp matched from plugin folder\n");					
-				push @plugins, $file;
-				push @filepath, $i;
-			}
-			else
-			{
-				dprint ("\t\t$file was not a match for $pluginp\n");
-			}
-		}
-	}
-	else
-	{	
-		if ( $file ne "plugins" )
-		{
-			push @plugins, $file;
-			push @filepath, $i;
-			#print "Path: ".$i."\t Name: ".$file."\n";
-		}
-	}
-}
-
-
-for (my $i = 0; $i < @plugins ; $i++ ) 
+foreach my $path (@spath)
 {
-    dprint ("Processing ".$plugins[$i]."...");
-    #print "Filename:".$filepath[$i]."/".$plugins[$i].".php"."\n";
-    $filename=$filepath[$i]."/".$plugins[$i].".php";
-	$varfound=0;
-    if ( -f $filename ) 
-    {
-		dprint ("Meta File found at default location.\n");				
-		open("txt", $filename);
-		while($line = <txt>) 
-		{			
-			if ( $line =~ /^\s*\**\s*\bVersion:(.*)/i )
-			{
-				$pluginversion[$i]=$1;
-				dprint ("Version found in file ".$filename);						
-				$varfound=1;										
-				dprint ($pluginversion[$i]."\n");
-				dprint ("Array Num ".$i." Stored plugin name:".$plugins[$i]." Version found and stored ".$pluginversion[$i]);
+	chdir($path);
+	print "Processing plugins from directory: $path\n";
+	my @folders = File::Find::Rule->directory->maxdepth(1)
+		->in( $path )
+		;
+	foreach my $i (@folders){
+		my ($volume, $directories, $file) = File::Spec->splitpath( $i );
+		if (@pluginproclist)
+		{					
+			for my $pluginp (@pluginproclist)
+			{			
+				if ( $pluginp eq $file )
+				{					
+					push @plugins, $file;
+					push @filepath, $i;
+				}			
 			}
 		}
-		close("txt");			
-    }
-    else
-    {
-		$searchpath=$path."/".$plugins[$i];
-		@files = <$searchpath/*.php>;
-		dprint ("Search path is ".$searchpath."\n");
-		
-OUT: 	foreach my $file (@files) 
-		{
-			dprint ("Checking alternate php file: ".$file."\n");
-			open("txt", $file);
-			while($line = <txt>) 
+		else
+		{	
+			if ( $file ne "plugins" )
 			{
-				#  $line =~ /^[\s\*]*Version:(.*)/i
-				# Discussion on regex: http://stackoverflow.com/questions/15728671/perl-regex-logic-error
+				push @plugins, $file;
+				push @filepath, $i;			
+			}
+		}
+	}
+
+
+	for (my $i = 0; $i < @plugins ; $i++ ) 
+	{
+		dprint ("Processing ".$plugins[$i]."...");    
+		$filename=$filepath[$i]."/".$plugins[$i].".php";
+		$varfound=0;
+		if ( -f $filename ) 
+		{
+			dprint ("Meta File found at default location.\n");				
+			open("txt", $filename);
+			while($line = <txt>) 
+			{			
 				if ( $line =~ /^\s*\**\s*\bVersion:(.*)/i )
 				{
 					$pluginversion[$i]=$1;
-					dprint ("Version found in file ".$file);						
+					dprint ("Version found in file ".$filename);						
 					$varfound=1;										
 					dprint ($pluginversion[$i]."\n");
 					dprint ("Array Num ".$i." Stored plugin name:".$plugins[$i]." Version found and stored ".$pluginversion[$i]);
-					last OUT;
 				}
 			}
-			close("txt");	
+			close("txt");			
 		}
-    }
-	push @plugins_notfound, $plugins[$i];
-}
+		else
+		{
+			$searchpath=$path."/".$plugins[$i];
+			@files = <$searchpath/*.php>;
+			dprint ("Search path is ".$searchpath."\n");
+			
+	OUT: 	foreach my $file (@files) 
+			{
+				dprint ("Checking alternate php file: ".$file."\n");
+				open("txt", $file);
+				while($line = <txt>) 
+				{
+					#  $line =~ /^[\s\*]*Version:(.*)/i
+					# Discussion on regex: http://stackoverflow.com/questions/15728671/perl-regex-logic-error
+					if ( $line =~ /^\s*\**\s*\bVersion:(.*)/i )
+					{
+						$pluginversion[$i]=$1;
+						dprint ("Version found in file ".$file);						
+						$varfound=1;										
+						dprint ($pluginversion[$i]."\n");
+						dprint ("Array Num ".$i." Stored plugin name:".$plugins[$i]." Version found and stored ".$pluginversion[$i]);
+						last OUT;
+					}
+				}
+				close("txt");	
+			}
+		}
+		push @plugins_notfound, $plugins[$i];
+	}
 
-if ( ! $varfound) 
-{
-	print "\nCould not parse version no from the follwing plugins:\n";
-	for (my $i = 0; $i < @plugins_notfound ; $i++ ) 
+	if ( ! $varfound) 
 	{
-		print $i." ".$plugins_notfound[$i]."\n";
+		print "\nCould not parse version no from the follwing plugins:\n";
+		for (my $i = 0; $i < @plugins_notfound ; $i++ ) 
+		{
+			print $i." ".$plugins_notfound[$i]."\n";
+		}
+	}
+	else 
+	{
+		dprint ("We found all version numbers");
+	}
+	if (!@pluginproclist)
+	{
+		print color 'red';	
+		print "Summary of scanning plugin directory\n";
+		print "------------------------------------\n";
+		printf("%-4s %-45s %3s\n", "No", "Name", "Version");
+		print color 'reset';
+		for (my $i = 0; $i < @plugins ; $i++ ) 
+		{
+			my $v = $pluginversion[$i];
+			$v =~ s/[^a-zA-Z0-9\.]*//g;	
+			printf("%-4s %-45s %3s\n", $i, $plugins[$i], $v );
+			#print "$i\t$plugins[$i]\t$pluginversion[$i]\n";
+		}
+		print "\n";
+	}
+
+	$pluginsdone=0;
+
+	if(defined($ARGV[1])) {
+		my $name = $ARGV[1];
+		&update_plugin($name);
+	}
+	else {
+		my $i=-1;
+		for my $name (@plugins) {
+			$i++;
+			&update_plugin($name,$i);
+		}
+	}
+
+	if ( $pluginsdone > 1 )
+	{
+		print "$pluginsdone plugin(s) were updated.\n";
+	}
+	else
+	{
+		print "Plugins were already up-to-date. Nothing done.\n";
 	}
 }
-else 
-{
-	dprint ("We found all version numbers");
-}
-if (!@pluginproclist)
-{
-	print color 'red';
-	#print colored("Summary of scanning plugin directory", 'red'), "\n";
-	print "Summary of scanning plugin directory\n";
-	print "------------------------------------\n";
-	printf("%-4s %-45s %3s\n", "No", "Name", "Version");
-	print color 'reset';
-	#print "No:\tName\tVersion\n";
-	for (my $i = 0; $i < @plugins ; $i++ ) 
-	{
-		my $v = $pluginversion[$i];
-		$v =~ s/[^a-zA-Z0-9\.]*//g;	
-		printf("%-4s %-45s %3s\n", $i, $plugins[$i], $v );
-		#print "$i\t$plugins[$i]\t$pluginversion[$i]\n";
-	}
-	print "\n";
-}
-
-################################################
-my $pluginsdone=0;
-
-if(defined($ARGV[1])) {
-    my $name = $ARGV[1];
-    &update_plugin($name);
-}
-else {
-	my $i=-1;
-    for my $name (@plugins) {
-		$i++;
-        &update_plugin($name,$i);
-    }
-}
-
-#print "Plugin updation completed successfully.\n";
-
-if ( $pluginsdone > 1 )
-{
-	print "$pluginsdone plugin(s) were updated.\n";
-}
-else
-{
-	print "Plugins were already up-to-date. Nothing done.\n";
-}
-
 sub update_plugin {
 	
     my $name = $_[0];
 	my $index = $_[1];
-    my $url = "$wp_base_url/$name";
-    #my $response = $mech->get( $url );
+    my $url = "$wp_base_url/$name";    
 	$mech->get( $url );
 	if ( $mech->success() )
-	{		
-		#die "Can't get $url -- ", $response->status_line unless $response->is_success;
+	{				
 		my $page = $mech->content;
 		$url="";
 		my ($version,$description,$file) = "";
@@ -319,7 +304,7 @@ sub ArgParser
 	GetOptions ('help|h' => \$help,
 				'plugin|p=s' => \@pluginproclist,
 				'version|v' => \$prtversion,
-				'source=s' => \$path
+				'source|s=s' => \@spath
 				);
 	if ($help)
 	{
@@ -333,14 +318,17 @@ sub ArgParser
 	}	
 	if (@pluginproclist)
 	{
-		print ("Received a list of plugins to process:\n");
+		my @totalpluginlist;
+		my @temparray;
 		for my $pluginp (@pluginproclist)
 		{
-			print ("\t$pluginp\n");
-		}
+			my @totalpluginlist = split(',', $pluginp);				
+			push(@temparray, @totalpluginlist);
+		}	
+		@pluginproclist=@temparray;
 	}
 
-	if (!$path)
+	if (!@spath)
 	{
 		print "Source path for plugins was not specified. If you need to specify it, use --source=/path/to/plugindir or -s/path/to/plugindir.";
 		print "Hard coded path will now be used.\n";
@@ -348,11 +336,23 @@ sub ArgParser
 		if ( -d $path )
 		{
 			dprint ("Path verified\n");
+			push @spath, $path;
 		}
 		else
 		{
 			dprint ("The path does not exist\n");
 			exit;
 		}
+	}
+	else 
+	{
+		my @totalpathlist;
+		my @temparray;
+		for my $pluginp (@spath)
+		{
+			my @totalpathlist = split(',', $pluginp);				
+			push(@temparray, @totalpathlist);
+		}	
+		@spath=@temparray;
 	}
 }

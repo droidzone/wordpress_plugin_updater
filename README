@@ -4,8 +4,14 @@ compare plugin versions to those on Wordpress.org central repository and update 
 
 Command line options:
 --help or -h: Display this help message
-
-
-
+--source=/path/to/plugindirectory or -s/path/to/plugindirectory
+--version or -v: Display script version information
+--plugin=PluginName or -pPluginName: Specify one or more plugins to process instead of all plugins under source directory. To specify more than one plugin,
+you can either repeat this option, like:
+	Eg: ./updater.pl --plugin=nextgen-gallery --plugin=genesis-beta-tester
+	  Or,
+you can alternately specify a comma seperated list of plugins, like:
+	Eg: ./updater.pl --plugin=nextgen-gallery,genesis-beta-tester
+	
 Credits:
  Modified and rewritten from the work of Ventz Petkov at http://blog.vpetkov.net/2011/08/03/script-to-upgrade-plugins-on-wordpress-to-the-latest-version-fully-automatically/
