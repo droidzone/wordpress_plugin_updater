@@ -289,12 +289,13 @@ sub ArgParser
 {
 	my $help='';
 	my $prtversion='';
-
+	my $dmode='';
 	#GetOptions ('help|h:s' => \$help);
-	GetOptions ('help|h' => \$help,
-				'plugin|p=s' => \@pluginproclist,
+	GetOptions ('help|h' => \$help,				
 				'version|v' => \$prtversion,
-				'source|s=s' => \@spath
+				'debug|d' => \$dmode,
+				'plugin|p=s' => \@pluginproclist,
+				'source|s=s' => \@spath				
 				);
 	if ($help)
 	{
@@ -306,6 +307,10 @@ sub ArgParser
 		print "Version:$progversion\n";
 		exit;
 	}	
+	if ($dmode)
+	{
+		$debugmode=1;
+	}
 	if (@pluginproclist)
 	{
 		my @totalpluginlist;
@@ -320,9 +325,19 @@ sub ArgParser
 
 	if (!@spath)
 	{
-		print "Source path for plugins was not specified. If you need to specify it, use --source=/path/to/plugindir or -s/path/to/plugindir.";
-		print "Hard coded path will now be used.\n";
-		$path="/var/www/virtual/joel.co.in/vettathu.com/htdocs/wp-content/plugins";
+		print "Source path for plugins was not specified. If you need to specify it, use --source=/path/to/plugindir or -s/path/to/plugindir.\n";
+		print "Would you like to specify path now (y/N)?";
+		chomp(my $spec =<>);
+		if ($spec =~ /y/i )
+		{
+			print "\nEnter path to plugin folder:";
+			chomp($path=<>);			
+		}
+		else
+		{
+			print "\nHard coded path will now be used.\n";
+			$path="/var/www/virtual/joel.co.in/vettathu.com/htdocs/wp-content/plugins";
+		}
 		if ( -d $path )
 		{
 			dprint ("Path verified\n");
