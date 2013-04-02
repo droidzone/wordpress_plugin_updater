@@ -26,50 +26,7 @@ print "Wordpress Plugin Updater script v$progversion.\n";
 print color 'reset';
 #&argparser(@$ARGV);
 Getopt::Long::Configure(qw(bundling no_getopt_compat));
-my $help='';
-my $prtversion='';
-our $path='';
-#GetOptions ('help|h:s' => \$help);
-GetOptions ('help|h' => \$help,
-			'plugin|p=s' => \@pluginproclist,
-			'version|v' => \$prtversion,
-			'source=s' => \$path
-			);
-print "Path spec: $path\n";			
-if ($help)
-{
-	&print_help;
-	exit;
-}
-if ($prtversion)
-{
-	print "Version:$progversion\n";
-	exit;
-}	
-if (@pluginproclist)
-{
-	print ("Received a list of plugins to process:\n");
-	for my $pluginp (@pluginproclist)
-	{
-		print ("\t$pluginp\n");
-	}
-}
 
-if (!$path)
-{
-	print "Source path for plugins was not specified. If you need to specify it, use --source=/path/to/plugindir or -s/path/to/plugindir.";
-	print "Hard coded path will now be used.\n";
-	$path="/var/www/virtual/joel.co.in/vettathu.com/htdocs/wp-content/plugins";
-	if ( -d $path )
-    {
-		dprint ("Path verified\n");
-    }
-    else
-    {
-		dprint ("The path does not exist\n");
-		exit;
-	}
-}
 
 dprint ("The path was set as ".$path."\n");
 print "Plugin directory:$path\n";
@@ -354,4 +311,49 @@ sub print_help
 	print "\nBoth arguments are optional\n\n";
 }
 
+sub ArgParser
+{
+	my $help='';
+	my $prtversion='';
+	our $path='';
+	#GetOptions ('help|h:s' => \$help);
+	GetOptions ('help|h' => \$help,
+				'plugin|p=s' => \@pluginproclist,
+				'version|v' => \$prtversion,
+				'source=s' => \$path
+				);
+	if ($help)
+	{
+		&print_help;
+		exit;
+	}
+	if ($prtversion)
+	{
+		print "Version:$progversion\n";
+		exit;
+	}	
+	if (@pluginproclist)
+	{
+		print ("Received a list of plugins to process:\n");
+		for my $pluginp (@pluginproclist)
+		{
+			print ("\t$pluginp\n");
+		}
+	}
 
+	if (!$path)
+	{
+		print "Source path for plugins was not specified. If you need to specify it, use --source=/path/to/plugindir or -s/path/to/plugindir.";
+		print "Hard coded path will now be used.\n";
+		$path="/var/www/virtual/joel.co.in/vettathu.com/htdocs/wp-content/plugins";
+		if ( -d $path )
+		{
+			dprint ("Path verified\n");
+		}
+		else
+		{
+			dprint ("The path does not exist\n");
+			exit;
+		}
+	}
+}
