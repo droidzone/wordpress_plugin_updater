@@ -23,9 +23,7 @@ use Term::ANSIColor;
 use Getopt::Long;
 Getopt::Long::Configure(qw(bundling no_getopt_compat));
 &ArgParser;    
-print color 'bold blue';
-print "Wordpress Plugin Updater script v$progversion.\n";
-print color 'reset';
+&ScriptHeader;
 
 #dprint ("The path was set as ".$path."\n");
 #print "Plugin directory:$path\n";
@@ -287,14 +285,6 @@ sub dprint
 	}
 }	
 
-sub print_help 
-{
-	print "\nCommand syntax:";
-	print "\n";
-	print "wpupdater [path/to/plugin dir] [plugin name]\n";
-	print "\nBoth arguments are optional\n\n";
-}
-
 sub ArgParser
 {
 	my $help='';
@@ -356,3 +346,39 @@ sub ArgParser
 		@spath=@temparray;
 	}
 }
+
+sub ScriptHeader
+{
+	print "\n";
+	print color 'bold blue';
+	print "Wordpress Plugin Updater script v$progversion.\n";
+	print color 'reset';
+}
+
+sub print_help 
+{
+&ScriptHeader;
+
+print '
+Wordpress plugin updater script is a perl script to check specified locations on your web server or Wordpress plugin updates. It will scan the folder, and
+compare plugin versions to those on Wordpress.org central repository and update if updates are found. It can batch process all plugins. Alternately, you can
+ specify command line options for the plugin names, and update just required plugins.
+
+Command line options:
+--help or -h: Display this help message
+--source=/path/to/plugindirectory or -s/path/to/plugindirectory
+	Multiple folders can be specified at a time.
+	Eg: ./updater.pl --source=/var/www/virtual/joel.co.in/vettathu.com/htdocs/wp-content/plugins,/var/www/virtual/joel.co.in/drjoel.in/htdocs/wp-content/plugins
+--version or -v: Display script version information
+--plugin=PluginName or -pPluginName: Specify one or more plugins to process instead of all plugins under source directory. To specify more than one plugin,
+you can either repeat this option, like:
+	Eg: ./updater.pl --plugin=nextgen-gallery --plugin=genesis-beta-tester
+	  Or,
+you can alternately specify a comma seperated list of plugins, like:
+	Eg: ./updater.pl --plugin=nextgen-gallery,genesis-beta-tester
+	
+Credits:
+ Modified and rewritten from the work of Ventz Petkov at http://blog.vpetkov.net/2011/08/03/script-to-upgrade-plugins-on-wordpress-to-the-latest-version-fully-automatically/'."\n";
+
+}
+
