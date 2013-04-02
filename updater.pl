@@ -290,12 +290,14 @@ sub ArgParser
 	my $help='';
 	my $prtversion='';
 	my $dmode='';
+	my @wpath;
 	#GetOptions ('help|h:s' => \$help);
 	GetOptions ('help|h' => \$help,				
 				'version|v' => \$prtversion,
 				'debug|d' => \$dmode,
 				'plugin|p=s' => \@pluginproclist,
-				'source|s=s' => \@spath				
+				'source|s=s' => \@spath,
+				'wp-path|wp=s' => \@wpath
 				);
 	if ($help)
 	{
@@ -323,7 +325,7 @@ sub ArgParser
 		@pluginproclist=@temparray;
 	}
 
-	if (!@spath)
+	if (!@spath && !@wpath)
 	{
 		print "Source path for plugins was not specified. If you need to specify it, use --source=/path/to/plugindir or -s/path/to/plugindir.\n";
 		print "Would you like to specify path now (y/N)?";
@@ -360,6 +362,20 @@ sub ArgParser
 		}	
 		@spath=@temparray;
 	}
+	if (@wpath)
+	{
+		my @totalw;
+		my @tempw;
+		for my $wp (@wpath)
+		{
+			my @totalw = split(',', $wp);				
+			push(@tempw, @totalw);
+		}	
+		for my $wp (@tempw)
+		{
+			push (@spath,$wp."/wp-content/plugins");
+		}
+	}
 }
 
 sub ScriptHeader
@@ -373,7 +389,6 @@ sub ScriptHeader
 sub print_help 
 {
 &ScriptHeader;
-
 print '
 Wordpress plugin updater script is a perl script to check specified locations on your web server or Wordpress plugin updates. It will scan the folder, and
 compare plugin versions to those on Wordpress.org central repository and update if updates are found. It can batch process all plugins. Alternately, you can
@@ -391,6 +406,8 @@ you can either repeat this option, like:
 	  Or,
 you can alternately specify a comma seperated list of plugins, like:
 	Eg: ./updater.pl --plugin=nextgen-gallery,genesis-beta-tester
+--wp-path= or -wp: Specify wordpress root directory instead of plugin directory
+	Eg: ./updater.pl --wp-path=/var/www/virtual/joel.co.in/droidzone.in/htdocs,/var/www/virtual/joel.co.in/vettathu.com/htdocs
 	
 Credits:
  Modified and rewritten from the work of Ventz Petkov at http://blog.vpetkov.net/2011/08/03/script-to-upgrade-plugins-on-wordpress-to-the-latest-version-fully-automatically/'."\n";
