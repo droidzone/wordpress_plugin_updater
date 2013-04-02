@@ -1,0 +1,9 @@
+Wordpress plugin updater script is a perl script to check specified locations on your web server or Wordpress plugin updates. It will scan the folder, and compare plugin versions to those on Wordpress.org central repository and update if updates are found. It can batch process all plugins. Alternately, you can specify command line options for the plugin names, and update just required plugins.
+
+Command line options:
+--help or -h: Display this help message
+
+
+
+Credits:
+ Modified and rewritten from the work of Ventz Petkov at http://blog.vpetkov.net/2011/08/03/script-to-upgrade-plugins-on-wordpress-to-the-latest-version-fully-automatically/
