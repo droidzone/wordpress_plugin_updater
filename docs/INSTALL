@@ -1,0 +1,7 @@
+Installation instructions:
+
+Requirements:
+A LInux distro
+Perl v5.16.0 is required. If you have an older version, you will need a local version installed, and should change the prefix of the script accordingly. Read below to know how to install perl locally:
+
+http://blog.droidzone.in/2013/04/16/install-local-version-of-perl-and-cpan/
