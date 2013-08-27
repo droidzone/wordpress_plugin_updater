@@ -13,7 +13,7 @@
 #   or
 # ./update-wp-plugins.pl registered-name-of-plugin
 # (and this works to update an exiting plugin or download+install a new one)
-use v5.16;
+use v5.18.0;
 my $progversion="3.0.0.3";
 our $debugmode=0;
 our ($directories,$varfound,$filename,$searchpath,$fullinstall,$line,@files,@pluginproclist,@spath);
