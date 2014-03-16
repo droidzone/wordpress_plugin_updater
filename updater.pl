@@ -14,6 +14,9 @@
 # ./update-wp-plugins.pl registered-name-of-plugin
 # (and this works to update an exiting plugin or download+install a new one)
 use v5.18.0;
+use strict;
+use warnings;
+
 my $progversion="3.0.0.3";
 our $debugmode=0;
 our ($directories,$varfound,$filename,$searchpath,$fullinstall,$line,@files,@pluginproclist,@spath);
@@ -21,6 +24,7 @@ our $path='';
 our $pluginsdone;
 use Term::ANSIColor;
 use Getopt::Long;
+our $FolderOwner;
 Getopt::Long::Configure(qw(bundling no_getopt_compat));
 &ArgParser;    
 &ScriptHeader;
@@ -45,6 +49,8 @@ my (@plugins, @plugins_notfound, @filepath, @pluginversion);
 use File::Find::Rule;
 use File::Spec;
 
+our $LASTDIR='';
+
 foreach my $path (@spath)
 {
 	chdir($path);
@@ -53,6 +59,8 @@ foreach my $path (@spath)
 		->in( $path )
 		;
 	foreach my $i (@folders){
+
+		#Processing each directory
 		my ($volume, $directories, $file) = File::Spec->splitpath( $i );
 		if (@pluginproclist)
 		{					
@@ -83,14 +91,14 @@ foreach my $path (@spath)
 		$varfound=0;
 		if ( -f $filename ) 
 		{
-			dprint ("Meta File found at default location.\n");				
+			#dprint ("Meta File found at default location.\n");				
 			open("txt", $filename);
 			while($line = <txt>) 
 			{			
 				if ( $line =~ /^\s*\**\s*\bVersion:(.*)/i )
 				{
 					$pluginversion[$i]=$1;
-					dprint ("Version found in file ".$filename);						
+					#dprint ("Version found in file ".$filename);						
 					$varfound=1;										
 					dprint ($pluginversion[$i]."\n");
 					dprint ("Array Num ".$i." Stored plugin name:".$plugins[$i]." Version found and stored ".$pluginversion[$i]);
@@ -219,7 +227,16 @@ sub update_plugin {
 		{
 			print colored($version, 'green');	
 			print " | ";
-			print colored("Already update\n", 'green');
+			print colored("Already update\n", 'green');		
+
+			#print "Storing permissions\n";
+			chomp(my $perm=`stat -c '%U' $searchpath`);
+			#print "Current owner of file:".$perm."\n";
+			#print "Setting correct ownership..\n";
+			my $permparam="chown -R $perm." . $perm. " ". $name;
+			#print "Command line is: $permparam\n";
+			`$permparam`;
+
 		}
 		else
 		{
@@ -228,11 +245,25 @@ sub update_plugin {
 			$pluginsdone++;
 			print colored("Updating now..\n\n", 'blue');
 			#print "Updating plugin $name now";
-			`/bin/rm -f $file`; print "Downloading: \t$url\n";
-			`/usr/bin/wget -q $url`; print "Unzipping: \t$file\n";
+			print "Storing permissions\n";
+			my $perm=`stat -c '%U' $searchpath`;
+			print "Current owner of file:".$perm."\n";
+
+			`/bin/rm -f $file`; 
+			print "Downloading: \t$url\n";
+			`/usr/bin/wget -q $url`; 
+			print "Unzipping: \t$file\n";
 			`/usr/bin/unzip -o $file`; 
 			print colored("Installed: \t$name\n\n", 'green');		
 			`/bin/rm -f $file`;
+
+			#print "Storing permissions\n";
+			chomp(my $perm=`stat -c '%U' $searchpath`);
+			#print "Current owner of file:".$perm."\n";
+			#print "Setting correct ownership..\n";
+			my $permparam="chown -R $perm." . $perm. " ". $name;
+			#print "Command line is: $permparam\n";
+			`$permparam`;
 		}
 	}
 	else

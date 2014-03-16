@@ -1,12 +1,7 @@
 This requires a local version of latest perl:
 
-wget http://www.cpan.org/src/5.0/perl-5.18.0.tar.gz
-tar xf perl-5.18.0.tar.gz
-cd perl-5.18.0
-mkdir /root/perl
-./Configure -des -Dprefix=/root/perl
-make && make install
+Automated script:
+http://blog.droidzone.in/2013/04/16/install-local-version-of-perl-and-cpan/
 
 Install modules:
-/root/perl/bin/cpan -i WWW::Mechanize
-/root/perl/bin/cpan -i File::Find::Rule
+/root/perl/bin/cpan -i WWW::Mechanize File::Find::Rule
