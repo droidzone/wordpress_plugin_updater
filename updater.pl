@@ -17,7 +17,7 @@ use v5.18.0;
 use strict;
 use warnings;
 
-my $progversion="3.0.0.3";
+my $progversion="3.0.1.0";
 our $debugmode=0;
 our ($directories,$varfound,$filename,$searchpath,$fullinstall,$line,@files,@pluginproclist,@spath);
 our $path='';
@@ -25,6 +25,7 @@ our $pluginsdone;
 use Term::ANSIColor;
 use Getopt::Long;
 our $FolderOwner;
+our $totalpluginssession = 0;
 Getopt::Long::Configure(qw(bundling no_getopt_compat));
 &ArgParser;    
 &ScriptHeader;
@@ -54,7 +55,7 @@ our $LASTDIR='';
 foreach my $path (@spath)
 {
 	chdir($path);
-	print "Processing plugins from directory: $path\n";
+	#print "Processing plugins from directory: $path\n";
 	my @folders = File::Find::Rule->directory->maxdepth(1)
 		->in( $path )
 		;
@@ -150,19 +151,22 @@ foreach my $path (@spath)
 	}
 	if (!@pluginproclist)
 	{
-		print color 'red';	
-		print "Summary of scanning plugin directory\n";
-		print "------------------------------------\n";
-		printf("%-4s %-45s %3s\n", "No", "Name", "Version");
-		print color 'reset';
-		for (my $i = 0; $i < @plugins ; $i++ ) 
-		{
-			my $v = $pluginversion[$i];
-			$v =~ s/[^a-zA-Z0-9\.]*//g;	
-			printf("%-4s %-45s %3s\n", $i, $plugins[$i], $v );
-			#print "$i\t$plugins[$i]\t$pluginversion[$i]\n";
-		}
-		print "\n";
+		#print color 'red';	
+	
+		#print "Summary of scanning plugin directory\n";
+		#print "------------------------------------\n";
+		#printf("%-4s %-45s %3s\n", "No", "Name", "Version");
+		#print color 'reset';
+		#for (my $i = 0; $i < @plugins ; $i++ ) 
+		#{
+		#	my $v = $pluginversion[$i];
+		#	$v =~ s/[^a-zA-Z0-9\.]*//g;	
+		#	printf("%-4s %-45s %3s\n", $i+1, $plugins[$i], $v );
+		#	
+		#}
+		#print "\n";
+		printf("%-10s \n", "Processing ".($#plugins+1)." plugins from ".$path);
+		$totalpluginssession = $#plugins+1;
 	}
 
 	$pluginsdone=0;
@@ -217,18 +221,19 @@ sub update_plugin {
 		$version =~ s/[^a-zA-Z0-9\.]*//g;	
 		$oldversion =~ s/[^a-zA-Z0-9\.]*//g;
 		
-		print "Processing plugin: ";
+		print "Processing ".($index+1)."/".$totalpluginssession.": " ;
 		print colored($name, 'green');	
 		print " | Local version ";
 		print colored($oldversion, 'green');		
-		print " | Remote version ";
+		print " | Latest version ";
 		
 		if ( $version eq $oldversion )
 		{
 			print colored($version, 'green');	
 			print " | ";
-			print colored("Already update\n", 'green');		
-
+			print "Already update\n";
+			#print colored("Already update\n", 'green');		
+			# Storing ownership of file
 			#print "Storing permissions\n";
 			chomp(my $perm=`stat -c '%U' $searchpath`);
 			#print "Current owner of file:".$perm."\n";
@@ -258,7 +263,7 @@ sub update_plugin {
 			`/bin/rm -f $file`;
 
 			#print "Storing permissions\n";
-			chomp(my $perm=`stat -c '%U' $searchpath`);
+			chomp($perm=`stat -c '%U' $searchpath`);
 			#print "Current owner of file:".$perm."\n";
 			#print "Setting correct ownership..\n";
 			my $permparam="chown -R $perm." . $perm. " ". $name;
