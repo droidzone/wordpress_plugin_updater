@@ -196,27 +196,41 @@ sub update_plugin {
 	
     my $name = $_[0];
 	my $index = $_[1];
-    my $url = "$wp_base_url/$name";    
+    my $url = "$wp_base_url/$name";  
+	#print "\n ** DEBUG ** VARIABLES: \$name $name \$index $index \$url $url\n";
 	$mech->get( $url );
 	if ( $mech->success() )
 	{				
-		my $page = $mech->content;
+		my $page = $mech->content;  
 		$url="";
+		#print "Successfully got the page.";
+		#open FH, ">", "/tmp/tmppage";
+		#print FH $page."\n";
+		#close FH;
+		#print $page."\n";
 		my ($version,$description,$file) = "";
-		if($page =~ /.*<p class="button"><a itemprop='downloadUrl' href='(.*)'>Download Version (.*)<\/a><\/p>.*/) 
+		#if($page =~ /.*<p class="button"><a itemprop='downloadUrl' href='(.*)'>Download Version (.*)<\/a><\/p>.*/) 
+		if($page =~ /.*<a\s*itemprop='downloadUrl'\s*href=['"](.*)['"]>\s*Download Version\s*(.*)\s*<\/a>.*/) 
 		{
 			$url = $1;
 			$version = $2;
-			if($page =~ /.*<p itemprop="description" class="shortdesc">\n(\s+)?(.*  
-		)(\s+)(\t+)?<\/p>.*/) 
+			#print "\n DEBUG2 ** \n ** VARIABLES: \$url $url \$version $version \n";
+			#if($page =~ /.*<p itemprop="description" class="shortdesc">\n(\s+)?(.*)(\s+)(\t+)?<\/p>.*/) 
+			if ( $page =~ /<h2 itemprop="name">(.*)<\/h2>/ )			
 			{
 				$description = $2;
+			} else {
+				die "Internal Scraping from wordpress plugin site did not execute. The site may have changed!\n";
 			}
+			#Need to update above code
 			if($url =~ /http:\/\/downloads\.wordpress\.org\/plugin\/(.*)/) 
 			{
 				$file = $1;
 			}
-		}	
+		}	else {
+			die "ERROR! Scraping from wordpress plugin site did not execute. The site may have changed!\n";
+			
+		}
 		my $oldversion = $pluginversion[$index];
 		$version =~ s/[^a-zA-Z0-9\.]*//g;	
 		$oldversion =~ s/[^a-zA-Z0-9\.]*//g;
