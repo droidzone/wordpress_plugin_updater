@@ -210,17 +210,17 @@ sub update_plugin {
 		#print $page."\n";
 		my ($version,$description,$file) = "";
 		#if($page =~ /.*<p class="button"><a itemprop='downloadUrl' href='(.*)'>Download Version (.*)<\/a><\/p>.*/) 
-		if($page =~ /.*<a\s*itemprop='downloadUrl'\s*href=['"](.*)['"]>\s*Download Version\s*(.*)\s*<\/a>.*/) 
+		if($page =~ /.*<a\s*?itemprop='downloadUrl'\s*?href=['"](.*)['"]>\s*Download Version\s*(.*)\s*<\/a>.*/) 
 		{
 			$url = $1;
 			$version = $2;
 			#print "\n DEBUG2 ** \n ** VARIABLES: \$url $url \$version $version \n";
 			#if($page =~ /.*<p itemprop="description" class="shortdesc">\n(\s+)?(.*)(\s+)(\t+)?<\/p>.*/) 
-			if ( $page =~ /<h2 itemprop="name">(.*)<\/h2>/ )			
+			if ( $page =~ /<h2\s*?itemprop="name">\s*?(.*)\s*?<\/h2>/ )			
 			{
 				$description = $2;
 			} else {
-				die "Internal Scraping from wordpress plugin site did not execute. The site may have changed!\n";
+				die "ERROR! Internal Scraping from wordpress plugin site did not execute. The site may have changed!\n";
 			}
 			#Need to update above code
 			if($url =~ /http:\/\/downloads\.wordpress\.org\/plugin\/(.*)/) 
