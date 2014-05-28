@@ -17,7 +17,7 @@ use v5.18.0;
 use strict;
 use warnings;
 
-my $progversion="3.0.1.0";
+my $progversion="3.0.1.1";
 our $debugmode=0;
 our ($directories,$varfound,$filename,$searchpath,$fullinstall,$line,@files,@pluginproclist,@spath);
 our $path='';
@@ -222,14 +222,12 @@ sub update_plugin {
 			} else {
 				die "ERROR! Internal Scraping from wordpress plugin site did not execute. The site may have changed!\n";
 			}
-			#Need to update above code
 			if($url =~ /http:\/\/downloads\.wordpress\.org\/plugin\/(.*)/) 
 			{
 				$file = $1;
 			}
 		}	else {
-			die "ERROR! Scraping from wordpress plugin site did not execute. The site may have changed!\n";
-			
+			die "ERROR! Scraping from wordpress plugin site did not execute. The site may have changed!\n";		
 		}
 		my $oldversion = $pluginversion[$index];
 		$version =~ s/[^a-zA-Z0-9\.]*//g;	
