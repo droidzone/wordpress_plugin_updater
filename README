@@ -3,7 +3,7 @@ compare plugin versions to those on Wordpress.org central repository and update 
  specify command line options for the plugin names, and update just required plugins.
 
 Installation instructions:
-Read ./docs/INSTALL
+Read ./INSTALL
 
 Command line options:
 --help or -h: Display this help message
