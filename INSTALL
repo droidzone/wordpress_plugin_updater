@@ -1,7 +1,9 @@
-This requires a local version of latest perl:
+The following was checked on Debian 6 and 7. 
 
-Automated script:
-http://blog.droidzone.in/2013/04/16/install-local-version-of-perl-and-cpan/
-
-Install modules:
-/root/perl/bin/cpan -i WWW::Mechanize File::Find::Rule
+Install required modules:
+ sudo apt-get install cpanminus git
+ cpanm -i Term::ANSIColor Getopt::Long Mojo::UserAgent IO::Socket::SSL File::Find::Rule File::Spec
+ git clone https://github.com/droidzone/wordpress_plugin_updater.git
+ 
+Now you can run the script with:
+ ./wordpress_plugin_updater/updater.pl

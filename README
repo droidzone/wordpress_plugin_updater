@@ -9,7 +9,7 @@ Command line options:
 --help or -h: Display this help message
 --source=/path/to/plugindirectory or -s/path/to/plugindirectory
 	Multiple folders can be specified at a time.
-	Eg: ./updater.pl --source=/var/www/virtual/joel.co.in/vettathu.com/htdocs/wp-content/plugins,/var/www/virtual/joel.co.in/drjoel.in/htdocs/wp-content/plugins
+	Eg: ./updater.pl --source=/var/www/virtual/site1/htdocs/wp-content/plugins,/var/www/virtual/site2/htdocs/wp-content/plugins
 --version or -v: Display script version information
 --plugin=PluginName or -pPluginName: Specify one or more plugins to process instead of all plugins under source directory. To specify more than one plugin,
 you can either repeat this option, like:
