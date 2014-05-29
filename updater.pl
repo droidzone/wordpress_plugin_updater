@@ -1,10 +1,4 @@
-#!/root/perl/bin/perl -w
-# Original Author: Ventz Petkov
-# Last updated by Original Author on
-# Date: 06-15-2011
-# Last: 12-20-2012
-# Version: 2.0
-#
+#!/usr/bin/perl
 # Rewritten by: Droidzone
 # Date 31-03-2013 www.droidzone.in
 # Version 3.0.0.2
@@ -13,43 +7,31 @@
 #   or
 # ./update-wp-plugins.pl registered-name-of-plugin
 # (and this works to update an exiting plugin or download+install a new one)
-use v5.18.0;
+# Thanks to Ventz Petkov for the idea.
+my $progversion="3.0.1.1";
 use strict;
 use warnings;
 
-my $progversion="3.0.1.1";
+#List of loaded modules
+use Term::ANSIColor;
+use Getopt::Long;
+use Mojo::UserAgent;
+use IO::Socket::SSL;
+use File::Find::Rule;
+use File::Spec;
+my $wp_base_url = "https://wordpress.org/plugins";
+
 our $debugmode=0;
 our ($directories,$varfound,$filename,$searchpath,$fullinstall,$line,@files,@pluginproclist,@spath);
 our $path='';
 our $pluginsdone;
-use Term::ANSIColor;
-use Getopt::Long;
 our $FolderOwner;
 our $totalpluginssession = 0;
 Getopt::Long::Configure(qw(bundling no_getopt_compat));
 &ArgParser;    
 &ScriptHeader;
 
-#dprint ("The path was set as ".$path."\n");
-#print "Plugin directory:$path\n";
-#
-
-use WWW::Mechanize;
-#use File::Find;
-my $mech = WWW::Mechanize->new( autocheck => 0 );
-$mech->agent_alias( 'Mac Safari' );
-my $wp_base_url = "http://wordpress.org/extend/plugins";
-
-################################################
-# Add New plugins Here:
-# Format:
-#   'registered-name-of-plugin',
-#
 my (@plugins, @plugins_notfound, @filepath, @pluginversion);
-
-use File::Find::Rule;
-use File::Spec;
-
 our $LASTDIR='';
 
 foreach my $path (@spath)
@@ -150,21 +132,7 @@ foreach my $path (@spath)
 		dprint ("We found all version numbers");
 	}
 	if (!@pluginproclist)
-	{
-		#print color 'red';	
-	
-		#print "Summary of scanning plugin directory\n";
-		#print "------------------------------------\n";
-		#printf("%-4s %-45s %3s\n", "No", "Name", "Version");
-		#print color 'reset';
-		#for (my $i = 0; $i < @plugins ; $i++ ) 
-		#{
-		#	my $v = $pluginversion[$i];
-		#	$v =~ s/[^a-zA-Z0-9\.]*//g;	
-		#	printf("%-4s %-45s %3s\n", $i+1, $plugins[$i], $v );
-		#	
-		#}
-		#print "\n";
+	{		
 		printf("%-10s \n", "Processing ".($#plugins+1)." plugins from ".$path);
 		$totalpluginssession = $#plugins+1;
 	}
@@ -197,39 +165,36 @@ sub update_plugin {
 	
     my $name = $_[0];
 	my $index = $_[1];
-    my $url = "$wp_base_url/$name";  
-	#print "\n ** DEBUG ** VARIABLES: \$name $name \$index $index \$url $url\n";
-	$mech->get( $url );
-	if ( $mech->success() )
-	{				
-		my $page = $mech->content;  
-		$url="";
-		#print "Successfully got the page.";
-		#open FH, ">", "/tmp/tmppage";
-		#print FH $page."\n";
-		#close FH;
-		#print $page."\n";
-		my ($version,$description,$file) = "";
-		#if($page =~ /.*<p class="button"><a itemprop='downloadUrl' href='(.*)'>Download Version (.*)<\/a><\/p>.*/) 
-		if($page =~ /.*<a\s*?itemprop='downloadUrl'\s*?href=['"](.*)['"]>\s*Download Version\s*(.*)\s*<\/a>.*/) 
-		{
-			$url = $1;
-			$version = $2;
-			#print "\n DEBUG2 ** \n ** VARIABLES: \$url $url \$version $version \n";
-			#if($page =~ /.*<p itemprop="description" class="shortdesc">\n(\s+)?(.*)(\s+)(\t+)?<\/p>.*/) 
-			if ( $page =~ /<h2\s*?itemprop="name">\s*?(.*)\s*?<\/h2>/ )			
-			{
-				$description = $2;
-			} else {
-				die "ERROR! Internal Scraping from wordpress plugin site did not execute. The site may have changed!\n";
-			}
-			if($url =~ /http:\/\/downloads\.wordpress\.org\/plugin\/(.*)/) 
-			{
-				$file = $1;
-			}
-		}	else {
-			die "ERROR! Scraping from wordpress plugin site did not execute. The site may have changed!\n";		
+    my $url = "$wp_base_url/$name/";  
+	# NOTE **
+	# * The method get will fail silently if the url is wrong.
+	# * The current proper url is https://wordpress.org/plugins/top-10/ 
+	# * If even the trailing slash is missing, it will fail, as the page gets redirected.
+	my $ua = Mojo::UserAgent->new;
+	my $dom = $ua->get($url)->res->dom;
+	my $url="";
+	my ($version,$description,$file) = "";
+	
+	
+	for my $link ($dom->find('a[itemprop=downloadUrl]')->each) {
+		if ($link->text =~ /Download Version (.*)/) {
+			$url =  $link->{href};
+			$version = $1;
 		}
+	}
+		
+		for my $link ($dom->find('h2[itemprop=name]')->each) {
+			$description=$link->text;
+		}
+		# Get file name http://downloads.wordpress.org/plugin/top-10.zip
+		if($url =~ /http:\/\/downloads\.wordpress\.org\/plugin\/(.*)/) 
+		{
+			$file = $1;
+		} else {
+			die "Could not parse the correct link for file to be downloaded. Check whether site has changed!\n";
+		}
+		
+		
 		my $oldversion = $pluginversion[$index];
 		$version =~ s/[^a-zA-Z0-9\.]*//g;	
 		$oldversion =~ s/[^a-zA-Z0-9\.]*//g;
@@ -244,18 +209,8 @@ sub update_plugin {
 		{
 			print colored($version, 'green');	
 			print " | ";
-			print "Already update\n";
-			#print colored("Already update\n", 'green');		
-			# Storing ownership of file
-			#print "Storing permissions\n";
-			chomp(my $perm=`stat -c '%U' $searchpath`);
-			#print "\nSearch path is $searchpath\n";
-			#print "Current owner of file:".$perm."\n";
-			#print "Setting correct ownership..\n";
-			#No need to do anything if version numbers are equal.
-			#my $permparam="chown -R $perm." . $perm. " ". $searchpath;
-			#print "Command line is: $permparam\n";
-			#`$permparam`;
+			print "Already update\n";			
+			chomp(my $perm=`stat -c '%U' $searchpath`);			
 
 		}
 		else
@@ -264,8 +219,6 @@ sub update_plugin {
 			print " | ";
 			$pluginsdone++;
 			print colored("Updating now..\n\n", 'blue');
-			#print "Updating plugin $name now";
-			#print "Storing permissions\n";
 			my $perm=`stat -c '%U' $searchpath`;
 			#print "Current owner of file:".$perm."\n";
 
@@ -276,23 +229,12 @@ sub update_plugin {
 			`/usr/bin/unzip -o $file`; 
 			print colored("Installed: \t$name\tVersion $version\n\n", 'green');		
 			`/bin/rm -f $file`;
-
-			#print "Storing permissions\n";
-			chomp($perm=`stat -c '%U' $searchpath`);
-			#print "Current owner of file:".$perm."\n";
-			#print "Setting correct ownership..\n";
+			chomp($perm=`stat -c '%U' $searchpath`);			
 			my $permparam="chown -R $perm." . $perm. " ". $name;
-			#print "Command line is: $permparam\n";
 			`$permparam`;
 		}
-	}
-	else
-	{
-		my $error_msg="Error while processing plugin - $name Maybe it's deleted from Wordpress! Error Code is:";
-		print colored($error_msg, 'red');
-		my $errorcode=$mech->status()."\n";
-		print colored($errorcode, 'red');
-	}
+	#}
+
 }
  
 sub read_extract
