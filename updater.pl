@@ -185,7 +185,8 @@ foreach my $path (@spath)
 
 	if ( $pluginsdone > 1 )
 	{
-		print "$pluginsdone plugin(s) were updated.\n";
+		#print "$pluginsdone plugin(s) were updated.\n";
+		print colored("$pluginsdone plugin(s) were updated.\n", 'blue');
 	}
 	else
 	{
@@ -248,11 +249,13 @@ sub update_plugin {
 			# Storing ownership of file
 			#print "Storing permissions\n";
 			chomp(my $perm=`stat -c '%U' $searchpath`);
+			#print "\nSearch path is $searchpath\n";
 			#print "Current owner of file:".$perm."\n";
 			#print "Setting correct ownership..\n";
-			my $permparam="chown -R $perm." . $perm. " ". $name;
+			#No need to do anything if version numbers are equal.
+			#my $permparam="chown -R $perm." . $perm. " ". $searchpath;
 			#print "Command line is: $permparam\n";
-			`$permparam`;
+			#`$permparam`;
 
 		}
 		else
@@ -262,16 +265,16 @@ sub update_plugin {
 			$pluginsdone++;
 			print colored("Updating now..\n\n", 'blue');
 			#print "Updating plugin $name now";
-			print "Storing permissions\n";
+			#print "Storing permissions\n";
 			my $perm=`stat -c '%U' $searchpath`;
-			print "Current owner of file:".$perm."\n";
+			#print "Current owner of file:".$perm."\n";
 
 			`/bin/rm -f $file`; 
 			print "Downloading: \t$url\n";
 			`/usr/bin/wget -q $url`; 
 			print "Unzipping: \t$file\n";
 			`/usr/bin/unzip -o $file`; 
-			print colored("Installed: \t$name\n\n", 'green');		
+			print colored("Installed: \t$name\tVersion $version\n\n", 'green');		
 			`/bin/rm -f $file`;
 
 			#print "Storing permissions\n";
